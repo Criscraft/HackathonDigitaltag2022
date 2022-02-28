@@ -44,6 +44,7 @@ class AnimationPlotter():
         test_filename {str} -- Filename of the test log textfile
         label {str} -- Name of y axis
     """
+
     def __init__(self, train_filename, test_filename, label):
         self.train_filename = train_filename
         self.test_filename = test_filename
@@ -54,6 +55,8 @@ class AnimationPlotter():
 
         #plot data
         self.fig, self.ax, self.handle_train, self.handle_test = plot_curves([train_data, test_data], x_label='epochs', y_label=label, labels=['train', 'test'])
+        #plt.show()
+        self.hfig = display(self.fig, display_id=True)
 
     def read_data(self, train_filename, test_filename, col):
         with open(train_filename, 'r') as f:
@@ -76,9 +79,13 @@ class AnimationPlotter():
         #plot data
         self.handle_train.set_data(train_data[:,0], train_data[:,1])
         self.handle_test.set_data(test_data[:,0], test_data[:,1])
-
-        #self.fig.canvas.draw()
-        plt.show()
+        min_y = min( train_data[:,1].min(), test_data[:,1].min() )
+        max_y = max( train_data[:,1].max(), test_data[:,1].max() )
+        range_y = max_y - min_y
+        self.ax.set_xlim(0, train_data[-1,0] + 1)
+        self.ax.set_ylim(min_y - 0.05*range_y, max_y + 0.05*range_y)
+        self.fig.canvas.draw()
+        self.hfig.update(self.fig)
 
 
 def plot_curves(data_list, x_label='x', y_label='y', labels=[]):
@@ -100,7 +107,7 @@ def plot_curves(data_list, x_label='x', y_label='y', labels=[]):
     if labels:
         label_iterator = iter(labels)
     
-    fig, ax = plt.subplots(figsize=(6, 4))
+    fig, ax = plt.subplots(figsize=(6, 3))
     handles = []
     legend_labels = []
 
@@ -117,8 +124,7 @@ def plot_curves(data_list, x_label='x', y_label='y', labels=[]):
     plt.setp(xlabels, rotation=45, horizontalalignment='right')
     ax.set_xlabel(x_label, fontsize=12)
     ax.set_ylabel(y_label, fontsize=12)
-    ax.set_ylim(0.,1.)
     plt.grid()
     fig.tight_layout()
-
+    fig.subplots_adjust(right=0.85, bottom=0.2)
     return fig, ax, handles[0], handles[1]
