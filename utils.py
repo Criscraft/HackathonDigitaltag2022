@@ -81,7 +81,7 @@ class AnimationPlotter():
         self.handle_test.set_data(test_data[:,0], test_data[:,1])
         min_y = min( train_data[:,1].min(), test_data[:,1].min() )
         max_y = max( train_data[:,1].max(), test_data[:,1].max() )
-        range_y = max_y - min_y
+        range_y = max(max_y - min_y, 1e-6)
         self.ax.set_xlim(0, train_data[-1,0] + 1)
         self.ax.set_ylim(min_y - 0.05*range_y, max_y + 0.05*range_y)
         self.fig.canvas.draw()
