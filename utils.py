@@ -35,43 +35,51 @@ def write_log(log_path, epoch, loss, accuracy):
     with open(log_path, 'a') as data:
         data.write("".join([textline, "\n"]))
 
-def plot_loss(train_filename, test_filename):
+
+class AnimationPlotter():
     """Plot the loss curve during training for train and test set
     
     Arguments:
         train_filename {str} -- Filename of the train log textfile
         test_filename {str} -- Filename of the test log textfile
+        label {str} -- Name of y axis
     """
+    def __init__(self, train_filename, test_filename, label):
+        self.train_filename = train_filename
+        self.test_filename = test_filename
+        self.label = label
 
-    #load loss data from disk
-    with open(train_filename, 'r') as f:
-        train_loss = np.genfromtxt(f, names=True, usecols=['epoch', 'loss'], delimiter='\t')
-        train_loss = train_loss.view(float).reshape(train_loss.shape + (-1,))
-    with open(test_filename, 'r') as f:
-        test_loss = np.genfromtxt(f, names=True, usecols=['epoch', 'loss'], delimiter='\t')
-        test_loss = test_loss.view(float).reshape(test_loss.shape + (-1,))
+        #load loss data from disk
+        train_data, test_data = self.read_data(self.train_filename, self.test_filename, self.label)
 
-    #plot loss data
-    plot_curves([train_loss, test_loss], x_label='epochs', y_label='loss', labels=['train', 'test'])
+        #plot data
+        self.fig, self.ax, self.handle_train, self.handle_test = plot_curves([train_data, test_data], x_label='epochs', y_label=label, labels=['train', 'test'])
 
-def plot_accuracy(train_filename, test_filename):
-    """Plot the accuracy curve during training for train and test set
-    
-    Arguments:
-        train_filename {str} -- Filename of the train log textfile
-        test_filename {str} -- Filename of the test log textfile
-    """
+    def read_data(self, train_filename, test_filename, col):
+        with open(train_filename, 'r') as f:
+            train_data = np.genfromtxt(f, names=True, usecols=['epoch', col], delimiter='\t')
+            try:
+                train_data = train_data.view(float).reshape(train_data.shape + (-1,))
+            except ValueError:
+                train_data = np.zeros((1,2))
+        with open(test_filename, 'r') as f:
+            test_data = np.genfromtxt(f, names=True, usecols=['epoch', col], delimiter='\t')
+            try:
+                test_data = test_data.view(float).reshape(test_data.shape + (-1,))
+            except ValueError:
+                test_data = np.zeros((1,2))
+        return train_data, test_data
 
-    #load accuracy data from disk
-    with open(train_filename, 'r') as f:
-        train_accuracy = np.genfromtxt(f, names=True, usecols=['epoch', 'accuracy'], delimiter='\t')
-        train_accuracy = train_accuracy.view(float).reshape(train_accuracy.shape + (-1,))
-    with open(test_filename, 'r') as f:
-        test_accuracy = np.genfromtxt(f, names=True, usecols=['epoch', 'accuracy'], delimiter='\t')
-        test_accuracy = test_accuracy.view(float).reshape(test_accuracy.shape + (-1,))
+    def update_values(self):
+        #load loss data from disk
+        train_data, test_data = self.read_data(self.train_filename, self.test_filename, self.label)
+        #plot data
+        self.handle_train.set_data(train_data[:,0], train_data[:,1])
+        self.handle_test.set_data(test_data[:,0], test_data[:,1])
 
-    #plot loss data
-    plot_curves([train_accuracy, test_accuracy], x_label='epochs', y_label='accuracy', labels=['train', 'test'])
+        #self.fig.canvas.draw()
+        plt.show()
+
 
 def plot_curves(data_list, x_label='x', y_label='y', labels=[]):
     """generic plot function for drawing lines
@@ -87,8 +95,8 @@ def plot_curves(data_list, x_label='x', y_label='y', labels=[]):
     Returns:
         figure -- matplotlib figure
         ax -- matplotlib ax
-    """
 
+    """
     if labels:
         label_iterator = iter(labels)
     
@@ -113,4 +121,4 @@ def plot_curves(data_list, x_label='x', y_label='y', labels=[]):
     plt.grid()
     fig.tight_layout()
 
-    return fig, ax
+    return fig, ax, handles[0], handles[1]
