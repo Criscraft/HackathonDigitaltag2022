@@ -41,31 +41,31 @@ class AnimationPlotter():
     
     Arguments:
         train_filename {str} -- Filename of the train log textfile
-        test_filename {str} -- Filename of the test log textfile
+        val_filename {str} -- Filename of the test log textfile
         label {str} -- Name of y axis
     """
 
-    def __init__(self, train_filename, test_filename, label):
+    def __init__(self, train_filename, val_filename, label):
         self.train_filename = train_filename
-        self.test_filename = test_filename
+        self.val_filename = val_filename
         self.label = label
 
         #load loss data from disk
-        train_data, test_data = self.read_data(self.train_filename, self.test_filename, self.label)
+        train_data, test_data = self.read_data(self.train_filename, self.val_filename, self.label)
 
         #plot data
         self.fig, self.ax, self.handle_train, self.handle_test = plot_curves([train_data, test_data], x_label='epochs', y_label=label, labels=['train', 'test'])
         #plt.show()
         self.hfig = display(self.fig, display_id=True)
 
-    def read_data(self, train_filename, test_filename, col):
+    def read_data(self, train_filename, val_filename, col):
         with open(train_filename, 'r') as f:
             train_data = np.genfromtxt(f, names=True, usecols=['epoch', col], delimiter='\t')
             try:
                 train_data = train_data.view(float).reshape(train_data.shape + (-1,))
             except ValueError:
                 train_data = np.zeros((1,2))
-        with open(test_filename, 'r') as f:
+        with open(val_filename, 'r') as f:
             test_data = np.genfromtxt(f, names=True, usecols=['epoch', col], delimiter='\t')
             try:
                 test_data = test_data.view(float).reshape(test_data.shape + (-1,))
@@ -75,7 +75,7 @@ class AnimationPlotter():
 
     def update_values(self):
         #load loss data from disk
-        train_data, test_data = self.read_data(self.train_filename, self.test_filename, self.label)
+        train_data, test_data = self.read_data(self.train_filename, self.val_filename, self.label)
         #plot data
         self.handle_train.set_data(train_data[:,0], train_data[:,1])
         self.handle_test.set_data(test_data[:,0], test_data[:,1])
@@ -104,9 +104,6 @@ def plot_curves(data_list, x_label='x', y_label='y', labels=[]):
         ax -- matplotlib ax
 
     """
-    if labels:
-        label_iterator = iter(labels)
-    
     fig, ax = plt.subplots(figsize=(6, 3))
     handles = []
     legend_labels = []
@@ -115,7 +112,7 @@ def plot_curves(data_list, x_label='x', y_label='y', labels=[]):
         handle, = ax.plot(data[:,0], data[:,1], linestyle='-')
         handles.append(handle)   
         if labels:
-            legend_labels.append(next(label_iterator))
+            legend_labels.append(labels[i])
         else:
             legend_labels.append(i)
 
