@@ -1,7 +1,8 @@
 
 import numpy as np
+import torch
 import matplotlib.pyplot as plt
-
+import torchvision.transforms as transforms
 
 def init_log(log_path):
     """Create a log textfile, overwrite the old one if it already exists
@@ -37,11 +38,11 @@ def write_log(log_path, epoch, loss, accuracy):
 
 
 class AnimationPlotter():
-    """Plot the loss curve during training for train and test set
+    """Plot the loss curve during training for train and validation set
     
     Arguments:
         train_filename {str} -- Filename of the train log textfile
-        val_filename {str} -- Filename of the test log textfile
+        val_filename {str} -- Filename of the validation log textfile
         label {str} -- Name of y axis
     """
 
@@ -54,7 +55,7 @@ class AnimationPlotter():
         train_data, test_data = self.read_data(self.train_filename, self.val_filename, self.label)
 
         #plot data
-        self.fig, self.ax, self.handle_train, self.handle_test = plot_curves([train_data, test_data], x_label='epochs', y_label=label, labels=['train', 'test'])
+        self.fig, self.ax, self.handle_train, self.handle_test = plot_curves([train_data, test_data], x_label='epochs', y_label=label, labels=['train', 'val'])
         #plt.show()
         self.hfig = display(self.fig, display_id=True)
 
@@ -125,3 +126,19 @@ def plot_curves(data_list, x_label='x', y_label='y', labels=[]):
     fig.tight_layout()
     fig.subplots_adjust(right=0.85, bottom=0.2)
     return fig, ax, handles[0], handles[1]
+
+
+def plot_images(data, labels=[], norm_mean=[0., 0., 0.], norm_std=[1., 1., 1.]):
+    ncol = 3
+    nrow = np.ceil(len(data) / float(ncol)).astype(int)
+    fig, _ = plt.subplots(nrow, ncol, figsize=(ncol*4,nrow*4))
+    for i, image_tensor in enumerate(data):
+        ax = plt.subplot(nrow, ncol, i+1)
+        norm_mean = np.array(norm_mean).reshape((3,1,1))
+        norm_std = np.array(norm_std).reshape((3,1,1))
+        image_tensor = (image_tensor * norm_std) + norm_mean
+        ax.imshow(np.transpose(image_tensor, axes=(1,2,0)), vmin=0., vmax=1.)
+        if labels:
+            ax.set_title(labels[i])
+        plt.axis('off')
+    return fig
